@@ -12,7 +12,7 @@ provider "aws" {
 
   default_tags {
     tags = {
-      project = "data-lake-serverless"
+      project = var.project_name
     }
   }
 }

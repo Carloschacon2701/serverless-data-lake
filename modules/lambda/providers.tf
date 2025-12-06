@@ -4,6 +4,10 @@ terraform {
       source  = "hashicorp/aws"
       version = "6.25.0"
     }
+    archive = {
+      source  = "hashicorp/archive"
+      version = "2.1.0"
+    }
   }
 }
 
@@ -12,7 +16,8 @@ provider "aws" {
 
   default_tags {
     tags = {
-      project = "data-lake-serverless"
+      project = var.project_name
     }
   }
 }
+
