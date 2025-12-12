@@ -39,7 +39,7 @@ resource "aws_iam_role_policy" "cloudwatch_full_access" {
 ########################################################
 # Glue Access Policy
 ########################################################
-data "aws_iam_role_policy" "glue_access_policy" {
+resource "aws_iam_role_policy" "glue_access_policy" {
   role = aws_iam_role.iam_for_glue.id
   policy = jsonencode({
     Version = "2012-10-17"

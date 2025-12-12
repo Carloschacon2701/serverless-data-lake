@@ -1,14 +1,11 @@
-locals {
-  create_crawler  = var.crawler_name != null
-  create_database = var.database_name != null
-}
+
 
 
 ########################################################
 # Glue Catalog Database
 ########################################################
 resource "aws_glue_catalog_database" "this" {
-  count = local.create_database ? 1 : 0
+  count = var.create_crawler ? 1 : 0
   name  = var.database_name
 }
 
@@ -16,8 +13,8 @@ resource "aws_glue_catalog_database" "this" {
 # Glue Crawler
 ########################################################
 resource "aws_glue_crawler" "this" {
-  count         = local.create_crawler ? 1 : 0
-  database_name = aws_glue_catalog_database.this.name
+  count         = var.create_crawler ? 1 : 0
+  database_name = aws_glue_catalog_database.this[0].name
   name          = var.crawler_name
   role          = aws_iam_role.iam_for_glue.arn
 
@@ -25,3 +22,4 @@ resource "aws_glue_crawler" "this" {
     path = var.s3_target_path
   }
 }
+
