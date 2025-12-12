@@ -1,11 +1,16 @@
 output "crawler_name" {
-  value       = aws_glue_crawler.this[0].name
+  value       = var.create_crawler ? aws_glue_crawler.this[0].name : null
   description = "The name of the crawler"
 }
 
 output "crawler_arn" {
-  value       = aws_glue_crawler.this[0].arn
+  value       = var.create_crawler ? aws_glue_crawler.this[0].arn : null
   description = "The ARN of the crawler"
+}
+
+output "database_name" {
+  value       = var.create_crawler ? aws_glue_catalog_database.this[0].name : null
+  description = "The name of the Glue database"
 }
 
 # output "job_name" {
