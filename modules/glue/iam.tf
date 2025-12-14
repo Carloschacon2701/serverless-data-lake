@@ -27,10 +27,51 @@ data "aws_iam_policy" "cloudwatch_full_access" {
 }
 
 ########################################################
+# Administrator Access
+########################################################
+data "aws_iam_policy" "admin_access" {
+  name = "AdministratorAccess"
+}
+
+########################################################
+# ETL job Role
+########################################################
+resource "aws_iam_role" "iam_for_etl_job" {
+  count              = var.create_job ? 1 : 0
+  assume_role_policy = data.aws_iam_policy_document.assume_role.json
+  name               = "${var.project_name}-etl-job-role"
+  path               = "/service-role/"
+}
+
+########################################################
+# ETL job Access Policy
+########################################################
+resource "aws_iam_role_policy" "etl_job_access_policy" {
+  count      = var.create_job ? 1 : 0
+  role       = aws_iam_role.iam_for_etl_job[0].id
+  policy     = data.aws_iam_policy.admin_access.arn
+  depends_on = [aws_iam_role.iam_for_etl_job[0]]
+}
+
+
+########################################################
+# Glue Role
+########################################################
+
+resource "aws_iam_role" "iam_for_glue" {
+  count              = var.create_crawler ? 1 : 0
+  assume_role_policy = data.aws_iam_policy_document.assume_role.json
+  name               = "${var.project_name}-glue-role"
+  path               = "/service-role/"
+}
+
+
+########################################################
 # Cloudwatch Full Access
 ########################################################
 resource "aws_iam_role_policy" "cloudwatch_full_access" {
-  role       = aws_iam_role.iam_for_glue.id
+  count      = var.create_crawler ? 1 : 0
+  role       = aws_iam_role.iam_for_glue[0].id
   policy     = data.aws_iam_policy.cloudwatch_full_access.arn
   depends_on = [aws_iam_role.iam_for_glue]
 }
@@ -40,7 +81,8 @@ resource "aws_iam_role_policy" "cloudwatch_full_access" {
 # Glue Access Policy
 ########################################################
 resource "aws_iam_role_policy" "glue_access_policy" {
-  role = aws_iam_role.iam_for_glue.id
+  count = var.create_crawler ? 1 : 0
+  role  = aws_iam_role.iam_for_glue[0].id
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -66,16 +108,5 @@ resource "aws_iam_role_policy" "glue_access_policy" {
       },
     ]
   })
-  depends_on = [aws_iam_role.iam_for_glue]
-}
-
-
-########################################################
-# Glue Role
-########################################################
-
-resource "aws_iam_role" "iam_for_glue" {
-  assume_role_policy = data.aws_iam_policy_document.assume_role.json
-  name               = "${var.project_name}-glue-role"
-  path               = "/service-role/"
+  depends_on = [aws_iam_role.iam_for_glue[0]]
 }
