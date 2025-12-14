@@ -56,7 +56,7 @@ resource "aws_glue_job" "this" {
   command {
     name            = "glueetl"
     python_version  = "3"
-    script_location = var.s3_scripts_bucket_name
+    script_location = "s3://${var.s3_scripts_bucket_name}/etljob.py"
   }
   execution_property {
     max_concurrent_runs = 1

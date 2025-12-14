@@ -96,3 +96,13 @@ variable "etl_output_prefix" {
   description = "The S3 prefix/folder for ETL job output"
   default     = "processed"
 }
+
+variable "role_attributes" {
+  type = list(object({
+    actions   = list(string)
+    effect    = string
+    resources = list(string)
+  }))
+  description = "The role attributes for glue crawler or job"
+  default     = []
+}

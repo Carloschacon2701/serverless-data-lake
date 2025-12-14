@@ -4,6 +4,11 @@ data "aws_caller_identity" "current" {}
 locals {
   region     = data.aws_region.current.name
   account_id = data.aws_caller_identity.current.account_id
+  extra_statements = [for statement in var.role_attributes : {
+    Action   = statement.actions
+    Effect   = statement.effect
+    Resource = statement.resources
+  }]
 }
 
 ########################################################
@@ -83,7 +88,7 @@ resource "aws_iam_role_policy" "glue_access_policy" {
   role  = aws_iam_role.iam_for_glue[0].id
   policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [
+    Statement = concat([
       {
         Action = [
           "glue:GetDatabase",
@@ -103,8 +108,9 @@ resource "aws_iam_role_policy" "glue_access_policy" {
           "arn:aws:glue:${local.region}:${local.account_id}:table/${var.database_name}/*",
           "arn:aws:glue:${local.region}:${local.account_id}:catalog"
         ]
-      },
-    ]
-  })
+      }
+    ], local.extra_statements)
+    }
+  )
   depends_on = [aws_iam_role.iam_for_glue[0]]
 }

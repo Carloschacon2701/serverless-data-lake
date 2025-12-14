@@ -13,6 +13,12 @@ output "database_name" {
   description = "The name of the Glue database"
 }
 
+output "job_name" {
+  value       = var.create_job ? aws_glue_job.this[0].name : null
+  description = "The name of the job"
+
+}
+
 # output "job_name" {
 #   value       = aws_glue_job.this.name
 #   description = "The name of the job"

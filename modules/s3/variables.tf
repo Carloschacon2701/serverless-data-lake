@@ -33,3 +33,9 @@ variable "lambda_function_arn" {
     error_message = "Lambda function ARN must be provided when create_lambda_triger is true"
   }
 }
+
+variable "path_to_object_to_upload" {
+  type        = string
+  description = "The path to the object to upload"
+  default     = null
+}

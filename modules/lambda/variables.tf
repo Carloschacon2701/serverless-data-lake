@@ -55,3 +55,13 @@ variable "environment_variables" {
   description = "The environment variables for the function"
   default     = []
 }
+
+variable "role_attributes" {
+  type = list(object({
+    actions   = list(string)
+    effect    = string
+    resources = list(string)
+  }))
+  description = "The role attributes for the lambda function"
+  default     = []
+}

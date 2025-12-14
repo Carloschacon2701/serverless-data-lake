@@ -7,25 +7,25 @@ module "s3" {
   bucket_name          = "data-lake-serverless"
   create_lambda_triger = true
   lambda_function_arn  = module.s3_lambda_trigger.function_arn
-
 }
 
-########################################################
-# S3 Bucket Processed
-########################################################
-module "s3_processed" {
-  source       = "./modules/s3"
-  project_name = "data-lake-serverless"
-  bucket_name  = "data-lake-serverless-processed"
-}
+# ########################################################
+# # S3 Bucket Processed
+# ########################################################
+# module "s3_processed" {
+#   source       = "./modules/s3"
+#   project_name = "data-lake-serverless"
+#   bucket_name  = "data-lake-serverless-processed"
+# }
 
 ########################################################
 # S3 for scripts
 ########################################################
 module "s3_scripts" {
-  source       = "./modules/s3"
-  project_name = "data-lake-serverless"
-  bucket_name  = "data-lake-serverless-scripts"
+  source                   = "./modules/s3"
+  project_name             = "data-lake-serverless"
+  bucket_name              = "data-lake-serverless-scripts"
+  path_to_object_to_upload = "./jobs/etljob.py"
 }
 
 ########################################################
@@ -41,9 +41,18 @@ module "s3_lambda_trigger" {
   environment_variables = [
     {
       name  = "CRAWLER_NAME"
-      value = "crawler-datalake"
+      value = module.glue_crawler.crawler_name
     }
   ]
+
+  role_attributes = [
+    {
+      actions   = ["glue:StartCrawler"]
+      effect    = "Allow"
+      resources = [module.glue_crawler.crawler_arn]
+    }
+  ]
+
 }
 
 ########################################################
@@ -52,9 +61,9 @@ module "s3_lambda_trigger" {
 module "glue_crawler" {
   source         = "./modules/glue"
   project_name   = "data-lake-serverless"
-  database_name  = "data-lake"
-  crawler_name   = "crawler-datalake"
-  s3_target_path = "s3://${module.s3.bucket_name}"
+  database_name  = "data-lake-serverless"
+  crawler_name   = "crawler-datalake-serverless"
+  s3_target_path = "s3://${module.s3.bucket_name}/raw"
   create_crawler = true
 }
 
@@ -71,7 +80,7 @@ module "glue_crawler_succeeded_lambda" {
   environment_variables = [
     {
       name  = "JOB_NAME"
-      value = "glue-job-datalake"
+      value = module.etl_job.job_name
     }
   ]
 }
@@ -121,7 +130,7 @@ module "eventbridge" {
         "source"      = ["aws.glue"]
         "detail-type" = ["Glue Job State Change"]
         "detail" = {
-          "jobName" = ["ETL-datalake"]
+          "jobName" = [module.etl_job.job_name]
           "state"   = ["SUCCEEDED"]
         }
       })
@@ -152,11 +161,11 @@ module "eventbridge" {
 module "etl_job" {
   source                 = "./modules/glue"
   project_name           = "data-lake-serverless"
-  etl_database_name      = "data-lake"
+  etl_database_name      = module.glue_crawler.database_name
   etl_table_name         = "raw"
-  etl_output_bucket_name = module.s3_processed.bucket_name
+  etl_output_bucket_name = module.s3.bucket_name
   etl_output_prefix      = "processed"
   job_name               = "etl-datalake"
-  s3_scripts_bucket_name = "s3://${module.s3_scripts.bucket_name}"
+  s3_scripts_bucket_name = module.s3_scripts.bucket_name
   create_job             = true
 }
