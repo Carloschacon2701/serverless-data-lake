@@ -44,13 +44,12 @@ resource "aws_iam_role" "iam_for_etl_job" {
 }
 
 ########################################################
-# ETL job Access Policy
+# ETL job Access Policy Attachment
 ########################################################
-resource "aws_iam_role_policy" "etl_job_access_policy" {
+resource "aws_iam_role_policy_attachment" "etl_job_admin_access" {
   count      = var.create_job ? 1 : 0
-  role       = aws_iam_role.iam_for_etl_job[0].id
-  policy     = data.aws_iam_policy.admin_access.arn
-  depends_on = [aws_iam_role.iam_for_etl_job[0]]
+  role       = aws_iam_role.iam_for_etl_job[0].name
+  policy_arn = data.aws_iam_policy.admin_access.arn
 }
 
 
@@ -67,13 +66,12 @@ resource "aws_iam_role" "iam_for_glue" {
 
 
 ########################################################
-# Cloudwatch Full Access
+# Cloudwatch Full Access Policy Attachment
 ########################################################
-resource "aws_iam_role_policy" "cloudwatch_full_access" {
+resource "aws_iam_role_policy_attachment" "cloudwatch_full_access" {
   count      = var.create_crawler ? 1 : 0
-  role       = aws_iam_role.iam_for_glue[0].id
-  policy     = data.aws_iam_policy.cloudwatch_full_access.arn
-  depends_on = [aws_iam_role.iam_for_glue]
+  role       = aws_iam_role.iam_for_glue[0].name
+  policy_arn = data.aws_iam_policy.cloudwatch_full_access.arn
 }
 
 

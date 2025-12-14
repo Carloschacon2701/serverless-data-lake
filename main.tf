@@ -55,6 +55,7 @@ module "glue_crawler" {
   database_name  = "data-lake"
   crawler_name   = "crawler-datalake"
   s3_target_path = "s3://${module.s3.bucket_name}"
+  create_crawler = true
 }
 
 ########################################################
@@ -129,57 +130,33 @@ module "eventbridge" {
   }
 
   targets = {
-    glue_crawler_succeeded = {
-      arn = module.glue_crawler_succeeded_lambda.function_arn
-    }
+    glue_crawler_succeeded = [
+      {
+        name = "glue-crawler-succeeded-lambda"
+        arn  = module.glue_crawler_succeeded_lambda.function_arn
+      }
+    ]
 
-    etl_job_succeeded = {
-      arn = module.sns_topic.topic_arn
-    }
+    etl_job_succeeded = [
+      {
+        name = "etl-job-succeeded-sns"
+        arn  = module.sns_topic.topic_arn
+      }
+    ]
   }
 }
 
 ########################################################
 # Glue ETL Job
 ########################################################
-resource "aws_glue_job" "etl_job" {
-  name     = "ETL-datalake"
-  role_arn = "arn:aws:iam::<id>:role/ETL-job-Role" # Update with your IAM role ARN
-
-  command {
-    name            = "glueetl"
-    python_version  = "3"
-    script_location = "s3://aws-glue-assets-<id>-us-east-1/scripts/ETL-datalake.py"
-  }
-
-  default_arguments = {
-    "--enable-glue-datacatalog"      = "true"
-    "--enable-job-insights"          = "true"
-    "--enable-metrics"               = "true"
-    "--enable-observability-metrics" = "true"
-    "--enable-spark-ui"              = "true"
-    "--job-language"                 = "python"
-    "--DATABASE_NAME"                = module.glue_crawler.database_name != null ? module.glue_crawler.database_name : "data-lake"
-    "--TABLE_NAME"                   = "raw"
-    "--OUTPUT_BUCKET_NAME"           = module.s3_processed.bucket_name
-    "--OUTPUT_PREFIX"                = "processed"
-  }
-
-  glue_version      = "5.0"
-  execution_class   = "STANDARD"
-  max_retries       = 0
-  timeout           = 480
-  number_of_workers = 10
-  worker_type       = "G.1X"
-
-  execution_property {
-    max_concurrent_runs = 1
-  }
+module "etl_job" {
+  source                 = "./modules/glue"
+  project_name           = "data-lake-serverless"
+  etl_database_name      = "data-lake"
+  etl_table_name         = "raw"
+  etl_output_bucket_name = module.s3_processed.bucket_name
+  etl_output_prefix      = "processed"
+  job_name               = "etl-datalake"
+  s3_scripts_bucket_name = "s3://${module.s3_scripts.bucket_name}"
+  create_job             = true
 }
-
-# If you need to import an existing job, uncomment the import block below
-# and comment out the resource above, then run: terraform import aws_glue_job.etl_job ETL-datalake
-# import {
-#   to = aws_glue_job.etl_job
-#   id = "ETL-datalake"
-# }
