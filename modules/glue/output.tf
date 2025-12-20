@@ -29,7 +29,7 @@ output "glue_role_arn" {
 #   description = "The name of the job"
 # }
 
-# output "job_arn" {
-#   value       = aws_glue_job.this.arn
-#   description = "The ARN of the job"
-# }
+output "job_arn" {
+  value       = var.create_job ? aws_glue_job.this[0].arn : null
+  description = "The ARN of the job"
+}

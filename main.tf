@@ -94,6 +94,11 @@ module "glue_crawler_succeeded_lambda" {
       value = module.etl_job.job_name
     }
   ]
+  role_attributes = [{
+    actions   = ["glue:StartJobRun", "glue:GetJobRun"]
+    effect    = "Allow"
+    resources = [module.etl_job.job_arn]
+  }]
 }
 
 ########################################################
@@ -121,6 +126,8 @@ module "eventbridge" {
   # bus_name    = var.project_name
   create_bus  = false
   create_role = true
+  role_name   = "${var.project_name}-eventbridge-role"
+
   # attach_policy        = true
   attach_lambda_policy = true
   lambda_target_arns   = [module.glue_crawler_succeeded_lambda.function_arn]
@@ -160,15 +167,17 @@ module "eventbridge" {
   targets = {
     glue_crawler_succeeded = [
       {
-        name = "glue-crawler-succeeded-lambda"
-        arn  = module.glue_crawler_succeeded_lambda.function_arn
+        name            = "glue-crawler-succeeded-lambda"
+        arn             = module.glue_crawler_succeeded_lambda.function_arn
+        attach_role_arn = true
       }
     ]
 
     etl_job_succeeded = [
       {
-        name = "etl-job-succeeded-sns"
-        arn  = module.sns_topic.topic_arn
+        name            = "etl-job-succeeded-sns"
+        arn             = module.sns_topic.topic_arn
+        attach_role_arn = true
       }
     ]
   }
