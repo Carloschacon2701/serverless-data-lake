@@ -6,3 +6,12 @@ variable "sns_topic_email_endpoint" {
     error_message = "The SNS topic email address must be a valid email format."
   }
 }
+
+variable "project_name" {
+  type        = string
+  description = "The name of the project"
+  validation {
+    condition     = length(var.project_name) > 0
+    error_message = "Project name must be at least 1 character long"
+  }
+}

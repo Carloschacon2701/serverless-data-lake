@@ -39,3 +39,14 @@ variable "path_to_object_to_upload" {
   description = "The path to the object to upload"
   default     = null
 }
+
+variable "service_to_access_bucket" {
+  type = list(object({
+    actions   = list(string)
+    effect    = string
+    resources = list(string)
+    principal = string
+  }))
+  description = "The services to access the bucket"
+  default     = []
+}

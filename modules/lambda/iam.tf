@@ -53,3 +53,30 @@ resource "aws_iam_role_policy_attachment" "lambda_policy_attachment" {
   policy_arn = data.aws_iam_policy.lambda_policy.arn
   depends_on = [aws_iam_role.iam_for_lambda]
 }
+
+resource "aws_iam_policy" "lambda_logging" {
+  name        = "lambda_logging_${var.function_name}"
+  path        = "/"
+  description = "IAM policy for logging from Lambda"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ]
+        Resource = ["arn:aws:logs:*:*:*"]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_logging_policy_attachment" {
+  role       = aws_iam_role.iam_for_lambda.name
+  policy_arn = aws_iam_policy.lambda_logging.arn
+  depends_on = [aws_iam_role.iam_for_lambda]
+}

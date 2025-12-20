@@ -1,0 +1,15 @@
+{
+  "tpep_pickup_datetime": "2024-01-21T07:15:00",
+  "tpep_dropoff_datetime": "2024-01-21T07:39:00",
+  "passenger_count": 1,
+  "trip_distance": 10.64,
+  "PULocationID": 78,
+  "DOLocationID": 49,
+  "fare_amount": 30.92,
+  "extra": 0.5,
+  "mta_tax": 0.5,
+  "tip_amount": 11.92,
+  "tolls_amount": 5.22,
+  "improvement_surcharge": 0.3,
+  "congestion_surcharge": 2.5
+}

@@ -19,6 +19,11 @@ output "job_name" {
 
 }
 
+output "glue_role_arn" {
+  value       = var.create_crawler ? aws_iam_role.iam_for_glue[0].arn : null
+  description = "The ARN of the Glue role"
+}
+
 # output "job_name" {
 #   value       = aws_glue_job.this.name
 #   description = "The name of the job"
