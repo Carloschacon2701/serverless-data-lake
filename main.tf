@@ -197,4 +197,9 @@ module "etl_job" {
   job_name               = "etl-datalake"
   s3_scripts_bucket_name = module.s3_scripts.bucket_name
   create_job             = true
+  role_attributes = [{
+    actions   = ["s3:GetObject", "s3:PutObject", "s3:ListBucket"]
+    effect    = "Allow"
+    resources = ["arn:aws:s3:::${var.project_name}/processed/*", "arn:aws:s3:::${var.project_name}", "arn:aws:s3:::${module.s3_scripts.bucket_name}", "arn:aws:s3:::${module.s3_scripts.bucket_name}/*"]
+  }]
 }

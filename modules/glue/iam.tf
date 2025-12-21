@@ -31,12 +31,6 @@ data "aws_iam_policy" "cloudwatch_full_access" {
   name = "CloudWatchFullAccess"
 }
 
-########################################################
-# Administrator Access
-########################################################
-data "aws_iam_policy" "admin_access" {
-  name = "AdministratorAccess"
-}
 
 ########################################################
 # ETL job Role
@@ -49,12 +43,15 @@ resource "aws_iam_role" "iam_for_etl_job" {
 }
 
 ########################################################
-# ETL job Access Policy Attachment
+# ETL job Access Policy 
 ########################################################
-resource "aws_iam_role_policy_attachment" "etl_job_admin_access" {
-  count      = var.create_job ? 1 : 0
-  role       = aws_iam_role.iam_for_etl_job[0].name
-  policy_arn = data.aws_iam_policy.admin_access.arn
+resource "aws_iam_role_policy" "etl_job_access" {
+  count = var.create_job ? 1 : 0
+  role  = aws_iam_role.iam_for_etl_job[0].name
+  policy = jsonencode({
+    Version   = "2012-10-17"
+    Statement = local.extra_statements
+  })
 }
 
 
