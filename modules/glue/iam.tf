@@ -49,8 +49,14 @@ resource "aws_iam_role_policy" "etl_job_access" {
   count = var.create_job ? 1 : 0
   role  = aws_iam_role.iam_for_etl_job[0].name
   policy = jsonencode({
-    Version   = "2012-10-17"
-    Statement = local.extra_statements
+    Version = "2012-10-17"
+    Statement = concat([
+      {
+        Action   = ["glue:GetTable", "glue:GetTables"]
+        Effect   = "Allow"
+        Resource = ["arn:aws:glue:${local.region}:${local.account_id}:catalog"]
+      }
+    ], local.extra_statements)
   })
 }
 

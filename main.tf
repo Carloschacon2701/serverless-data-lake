@@ -203,3 +203,12 @@ module "etl_job" {
     resources = ["arn:aws:s3:::${var.project_name}/processed/*", "arn:aws:s3:::${var.project_name}", "arn:aws:s3:::${module.s3_scripts.bucket_name}", "arn:aws:s3:::${module.s3_scripts.bucket_name}/*"]
   }]
 }
+
+
+########################################################
+# Athena Database
+########################################################
+resource "aws_athena_database" "athena_database" {
+  name   = var.project_name
+  bucket = module.s3.bucket_id
+}
