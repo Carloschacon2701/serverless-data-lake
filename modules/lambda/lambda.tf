@@ -44,11 +44,18 @@ resource "aws_lambda_function" "function" {
     }
   }
 
-  dead_letter_config {
-    target_arn = var.error_handling ? aws_sqs_queue.lambda_dlq[0].arn : null
+  dynamic "dead_letter_config" {
+    for_each = var.error_handling ? [1] : []
+    content {
+      target_arn = aws_sqs_queue.lambda_dlq[0].arn
+    }
   }
 
-  depends_on = [aws_cloudwatch_log_group.lambda_log_group, aws_sqs_queue.lambda_dlq, aws_iam_role_policy_attachment.lambda_logging_policy_attachment, aws_iam_role_policy_attachment.lambda_policy_attachment]
+  depends_on = [
+    aws_cloudwatch_log_group.lambda_log_group,
+    aws_iam_role_policy_attachment.lambda_logging_policy_attachment,
+    aws_iam_role_policy_attachment.lambda_policy_attachment
+  ]
 
 }
 
