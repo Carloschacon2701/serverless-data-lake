@@ -52,9 +52,20 @@ resource "aws_iam_role_policy" "etl_job_access" {
     Version = "2012-10-17"
     Statement = concat([
       {
-        Action   = ["glue:GetTable", "glue:GetTables"]
-        Effect   = "Allow"
-        Resource = ["arn:aws:glue:${local.region}:${local.account_id}:catalog"]
+        Action = ["glue:GetTable", "glue:GetTables", "glue:GetDatabase",
+          "glue:GetDatabases",
+          "glue:CreateTable",
+          "glue:UpdateTable",
+          "glue:GetTable",
+          "glue:GetTables",
+          "glue:GetPartitions",
+          "glue:CreatePartition",
+          "glue:UpdatePartition",
+        "glue:DeletePartition"]
+        Effect = "Allow"
+        Resource = ["arn:aws:glue:${local.region}:${local.account_id}:catalog",
+          "arn:aws:glue:${local.region}:${local.account_id}:database/${var.etl_database_name}",
+        "arn:aws:glue:${local.region}:${local.account_id}:table/${var.etl_database_name}/*", ]
       }
     ], local.extra_statements)
   })

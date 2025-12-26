@@ -200,15 +200,60 @@ module "etl_job" {
   role_attributes = [{
     actions   = ["s3:GetObject", "s3:PutObject", "s3:ListBucket"]
     effect    = "Allow"
-    resources = ["arn:aws:s3:::${var.project_name}/processed/*", "arn:aws:s3:::${var.project_name}", "arn:aws:s3:::${module.s3_scripts.bucket_name}", "arn:aws:s3:::${module.s3_scripts.bucket_name}/*"]
+    resources = ["arn:aws:s3:::${var.project_name}", "arn:aws:s3:::${var.project_name}/processed/*", "arn:aws:s3:::${var.project_name}/raw/*", "arn:aws:s3:::${module.s3_scripts.bucket_name}", "arn:aws:s3:::${module.s3_scripts.bucket_name}/*"]
   }]
 }
 
-
-########################################################
-# Athena Database
-########################################################
-resource "aws_athena_database" "athena_database" {
-  name   = var.project_name
-  bucket = module.s3.bucket_id
+module "athena" {
+  source         = "./modules/athena"
+  project_name   = var.project_name
+  workgroup_name = var.project_name
+  database_name  = module.glue_crawler.database_name
+  bucket_name    = "${module.s3.bucket_name}/processed"
+  columns = [
+    {
+      name = "tpep_dropoff_datetime"
+      type = "string"
+    },
+    {
+      name = "trip_distance"
+      type = "double"
+    },
+    {
+      name = "fare_amount"
+      type = "double"
+    },
+    {
+      name = "tpep_pickup_datetime"
+      type = "string"
+    },
+    {
+      name = "tolls_amount"
+      type = "double"
+    },
+    {
+      name = "tip_amount"
+      type = "double"
+    },
+    {
+      name = "passenger_count"
+      type = "int"
+    },
+    {
+      name = "total_amount"
+      type = "double"
+    },
+    {
+      name = "trip_duration_minutes"
+      type = "double"
+    },
+    {
+      name = "trip_category"
+      type = "string"
+    },
+    {
+      name = "tip_percentage"
+      type = "double"
+    }
+  ]
 }
