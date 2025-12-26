@@ -65,3 +65,9 @@ variable "role_attributes" {
   description = "The role attributes for the lambda function"
   default     = []
 }
+
+variable "error_handling" {
+  type        = bool
+  description = "Determines if the function should handle errors"
+  default     = false
+}

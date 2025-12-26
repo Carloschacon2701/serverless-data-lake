@@ -23,8 +23,9 @@ resource "aws_glue_crawler" "this" {
   }
 }
 
-
-
+########################################################
+# Glue ETL Job
+########################################################
 resource "aws_glue_job" "this" {
   count = var.create_job ? 1 : 0
   default_arguments = merge(

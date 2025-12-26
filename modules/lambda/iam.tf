@@ -4,7 +4,7 @@ locals {
 }
 
 ########################################################
-# Lambda Role
+# Lambda Assume Role Policy Document
 ########################################################
 data "aws_iam_policy_document" "assume_role" {
   statement {
@@ -19,10 +19,16 @@ data "aws_iam_policy_document" "assume_role" {
   }
 }
 
+########################################################
+# Lambda Basic Execution Policy
+########################################################
 data "aws_iam_policy" "lambda_policy" {
   name = "AWSLambdaBasicExecutionRole"
 }
 
+########################################################
+# Lambda Role Policy
+########################################################
 resource "aws_iam_role_policy" "lambda_role_policy" {
   count = local.create_role_policy
   role  = aws_iam_role.iam_for_lambda.name
@@ -38,22 +44,34 @@ resource "aws_iam_role_policy" "lambda_role_policy" {
   })
 }
 
+########################################################
+# Random ID for Lambda Role Name
+########################################################
 resource "random_id" "lambda_role_name" {
   byte_length = 8
   prefix      = "${var.project_name}-lambda-role-terraform"
 }
 
+########################################################
+# Lambda IAM Role
+########################################################
 resource "aws_iam_role" "iam_for_lambda" {
   name               = random_id.lambda_role_name.id
   assume_role_policy = data.aws_iam_policy_document.assume_role.json
 }
 
+########################################################
+# Lambda Policy Attachment
+########################################################
 resource "aws_iam_role_policy_attachment" "lambda_policy_attachment" {
   role       = aws_iam_role.iam_for_lambda.name
   policy_arn = data.aws_iam_policy.lambda_policy.arn
   depends_on = [aws_iam_role.iam_for_lambda]
 }
 
+########################################################
+# Lambda Logging IAM Policy
+########################################################
 resource "aws_iam_policy" "lambda_logging" {
   name        = "lambda_logging_${var.function_name}"
   path        = "/"
@@ -75,6 +93,9 @@ resource "aws_iam_policy" "lambda_logging" {
   })
 }
 
+########################################################
+# Lambda Logging Policy Attachment
+########################################################
 resource "aws_iam_role_policy_attachment" "lambda_logging_policy_attachment" {
   role       = aws_iam_role.iam_for_lambda.name
   policy_arn = aws_iam_policy.lambda_logging.arn

@@ -1,6 +1,6 @@
 # Serverless Data Lake
 
-A serverless AWS data pipeline for ingesting, cataloging, and processing data using AWS Glue, Lambda, EventBridge, and S3. This infrastructure automatically processes raw data files uploaded to S3, catalogs them in the AWS Glue Data Catalog, transforms them using a Glue ETL job, and sends email notifications upon completion.
+A serverless AWS data pipeline for ingesting, cataloging, and processing data using AWS Glue, Lambda, EventBridge, S3, and Athena. This infrastructure automatically processes raw data files uploaded to S3, catalogs them in the AWS Glue Data Catalog, transforms them using a Glue ETL job, and makes the processed data queryable via Athena. Email notifications are sent upon completion.
 
 ## Architecture Overview
 
@@ -105,6 +105,17 @@ Two EventBridge rules orchestrate the pipeline:
 - **Subscription**: Email subscription to the address specified in `sns_topic_email_endpoint`
 - **Purpose**: Sends email notifications when the ETL job completes successfully
 
+### Amazon Athena
+
+- **Workgroup Name**: Uses the project name
+- **Table Name**: `athena_table`
+- **Purpose**: Provides serverless SQL query capability for analyzing processed data stored in Parquet format
+- **Configuration**:
+  - Engine Version: AUTO
+  - Managed Query Results: Enabled
+  - Data Source: Queries the processed data from `s3://<project-name>/processed/`
+  - Format: Parquet (external table in Glue Data Catalog)
+
 ## Prerequisites
 
 - Terraform >= 1.0
@@ -199,11 +210,40 @@ The Glue ETL job (`etljob.py`) performs the following transformations:
 - `modules/s3/`: S3 bucket creation with optional Lambda triggers and object uploads
 - `modules/lambda/`: Lambda function deployment with IAM roles and CloudWatch logging
 - `modules/glue/`: Glue database, crawler, and ETL job configuration
+- `modules/athena/`: Athena workgroup and Glue catalog table configuration for querying processed data
 
 ## Outputs
 
+The following outputs are available after deployment:
+
+### S3 Buckets
+
 - `s3_bucket_name`: Name of the raw data S3 bucket
-- `s3_lambda_trigger_function_name`: Name of the S3-triggered Lambda function
+- `s3_bucket_arn`: ARN of the raw data S3 bucket
+- `s3_scripts_bucket_name`: Name of the S3 scripts bucket (stores ETL job script)
+
+### Lambda Functions
+
+- `s3_lambda_trigger_function_name`: Name of the S3-triggered Lambda function (`data-lake-serverless`)
+- `s3_lambda_trigger_function_arn`: ARN of the S3-triggered Lambda function
+- `glue_crawler_succeeded_lambda_function_name`: Name of the Glue crawler succeeded Lambda function
+
+### AWS Glue
+
+- `glue_crawler_name`: Name of the Glue crawler
+- `glue_database_name`: Name of the Glue Data Catalog database
+- `etl_job_name`: Name of the Glue ETL job
+- `etl_job_arn`: ARN of the Glue ETL job
+
+### Amazon Athena
+
+- `athena_workgroup_name`: Name of the Athena workgroup
+- `athena_workgroup_arn`: ARN of the Athena workgroup
+- `athena_table_name`: Name of the Athena table for querying processed data
+
+### Amazon SNS
+
+- `sns_topic_arn`: ARN of the SNS topic for email notifications
 
 ## Cleanup
 

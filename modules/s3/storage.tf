@@ -30,7 +30,9 @@ resource "aws_s3_bucket_notification" "bucket_notification" {
   depends_on = [aws_lambda_permission.allow_bucket]
 }
 
-
+########################################################
+# S3 Object Upload
+########################################################
 resource "aws_s3_object" "object" {
   count      = local.create_object
   bucket     = aws_s3_bucket.bucket.id

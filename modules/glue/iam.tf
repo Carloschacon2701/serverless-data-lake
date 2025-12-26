@@ -1,4 +1,11 @@
+########################################################
+# Current AWS Region Data Source
+########################################################
 data "aws_region" "current" {}
+
+########################################################
+# Current AWS Caller Identity Data Source
+########################################################
 data "aws_caller_identity" "current" {}
 
 locals {
@@ -12,7 +19,7 @@ locals {
 }
 
 ########################################################
-# Glue Assume Role Policy
+# Glue Assume Role Policy Document
 ########################################################
 data "aws_iam_policy_document" "assume_role" {
   statement {
@@ -25,7 +32,7 @@ data "aws_iam_policy_document" "assume_role" {
 }
 
 ########################################################
-# Cloudwatch Full Access
+# CloudWatch Full Access Policy
 ########################################################
 data "aws_iam_policy" "cloudwatch_full_access" {
   name = "CloudWatchFullAccess"

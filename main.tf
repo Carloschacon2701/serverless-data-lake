@@ -38,12 +38,13 @@ module "s3_scripts" {
 # S3 Lambda Trigger
 ########################################################
 module "s3_lambda_trigger" {
-  source        = "./modules/lambda"
-  project_name  = var.project_name
-  function_name = "data-lake-serverless"
-  handler       = "index.handler"
-  runtime       = "nodejs20.x"
-  code_path     = "./lambda/startCrawler/index.mjs"
+  source         = "./modules/lambda"
+  project_name   = var.project_name
+  function_name  = "data-lake-serverless"
+  handler        = "index.handler"
+  runtime        = "nodejs20.x"
+  code_path      = "./lambda/startCrawler/index.mjs"
+  error_handling = true
   environment_variables = [
     {
       name  = "CRAWLER_NAME"
@@ -204,6 +205,9 @@ module "etl_job" {
   }]
 }
 
+########################################################
+# Athena Module
+########################################################
 module "athena" {
   source         = "./modules/athena"
   project_name   = var.project_name

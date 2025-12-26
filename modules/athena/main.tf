@@ -1,6 +1,7 @@
 
-
-
+########################################################
+# Athena Workgroup
+########################################################
 resource "aws_athena_workgroup" "athena_database" {
   name = var.workgroup_name
   configuration {
@@ -15,8 +16,10 @@ resource "aws_athena_workgroup" "athena_database" {
 
 }
 
+########################################################
+# Glue Catalog Table for Athena
+########################################################
 resource "aws_glue_catalog_table" "MyTable" {
-  catalog_id    = "723963372483"
   database_name = var.database_name
   name          = "athena_table"
   owner         = "hadoop"

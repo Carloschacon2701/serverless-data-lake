@@ -14,7 +14,9 @@ resource "aws_lambda_permission" "allow_bucket" {
   source_arn    = aws_s3_bucket.bucket.arn
 }
 
-
+########################################################
+# S3 Bucket Policy
+########################################################
 resource "aws_s3_bucket_policy" "bucket_policy" {
   count  = local.create_bucket_policy ? 1 : 0
   bucket = aws_s3_bucket.bucket.id

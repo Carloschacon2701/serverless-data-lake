@@ -1,10 +1,15 @@
-# Package the Lambda function code
+########################################################
+# Archive File for Lambda Function
+########################################################
 data "archive_file" "function" {
   type        = "zip"
   source_file = var.code_path
   output_path = "${path.module}/lambda/${var.function_name}.zip"
 }
 
+########################################################
+# CloudWatch Log Group for Lambda
+########################################################
 resource "aws_cloudwatch_log_group" "lambda_log_group" {
   name              = "/aws/lambda/${var.function_name}"
   retention_in_days = 14
@@ -15,8 +20,9 @@ resource "aws_cloudwatch_log_group" "lambda_log_group" {
   }
 }
 
-
-# Lambda function
+########################################################
+# Lambda Function
+########################################################
 resource "aws_lambda_function" "function" {
   filename         = data.archive_file.function.output_path
   function_name    = var.function_name
@@ -38,6 +44,68 @@ resource "aws_lambda_function" "function" {
     }
   }
 
-  depends_on = [aws_cloudwatch_log_group.lambda_log_group, aws_iam_role_policy_attachment.lambda_logging_policy_attachment, aws_iam_role_policy_attachment.lambda_policy_attachment]
+  dead_letter_config {
+    target_arn = var.error_handling ? aws_sqs_queue.lambda_dlq[0].arn : null
+  }
 
+  depends_on = [aws_cloudwatch_log_group.lambda_log_group, aws_sqs_queue.lambda_dlq, aws_iam_role_policy_attachment.lambda_logging_policy_attachment, aws_iam_role_policy_attachment.lambda_policy_attachment]
+
+}
+
+########################################################
+# Lambda Dead Letter Queue
+########################################################
+resource "aws_sqs_queue" "lambda_dlq" {
+  count = var.error_handling ? 1 : 0
+
+  name                      = "${var.function_name}-dlq"
+  message_retention_seconds = 1209600 # 14 days (max retention)
+
+  tags = {
+    Environment = var.project_name
+    Function    = var.function_name
+    Purpose     = "DeadLetterQueue"
+  }
+}
+
+########################################################
+# Lambda DLQ IAM Role Policy
+########################################################
+resource "aws_iam_role_policy" "lambda_dlq_policy" {
+  count = var.error_handling ? 1 : 0
+  name  = "${var.function_name}-dlq-policy"
+  role  = aws_iam_role.iam_for_lambda.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "sqs:SendMessage"
+        ]
+        Resource = aws_sqs_queue.lambda_dlq[0].arn
+      }
+    ]
+  })
+
+  depends_on = [aws_iam_role.iam_for_lambda]
+}
+
+########################################################
+# Lambda Function Event Invoke Config
+########################################################
+resource "aws_lambda_function_event_invoke_config" "function_event_invoke_config" {
+  count                        = var.error_handling ? 1 : 0
+  function_name                = aws_lambda_function.function.function_name
+  maximum_retry_attempts       = 2
+  maximum_event_age_in_seconds = 60
+
+  destination_config {
+    on_failure {
+      destination = aws_sqs_queue.lambda_dlq[0].arn
+    }
+  }
+
+  depends_on = [aws_lambda_function.function, aws_sqs_queue.lambda_dlq]
 }
