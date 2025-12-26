@@ -35,6 +35,15 @@ S3 (Raw Data) → Lambda → Glue Crawler → EventBridge → Lambda → Glue ET
 
 ### AWS Lambda Functions
 
+All Lambda functions in this project include:
+
+- **CloudWatch Logging**: JSON-formatted logs with INFO level for application logs and WARN for system logs
+- **Log Retention**: 14 days
+- **Optional Error Handling**: When enabled, failed invocations are captured with:
+  - **Dead Letter Queue (DLQ)**: SQS queue for failed invocations (14-day retention)
+  - **Retry Configuration**: Up to 2 retry attempts with 60-second maximum event age
+  - **Event Invoke Config**: Configures asynchronous invocation error handling
+
 #### 1. `data-lake-serverless` (S3 Trigger Lambda)
 
 - **Trigger**: S3 bucket notification when objects are created in `raw/` prefix
@@ -44,6 +53,10 @@ S3 (Raw Data) → Lambda → Glue Crawler → EventBridge → Lambda → Glue ET
 - **Permissions**: `glue:StartCrawler` on the crawler resource
 - **Environment Variables**:
   - `CRAWLER_NAME`: Name of the Glue Crawler to start
+- **Error Handling**: Enabled with Dead Letter Queue (DLQ) for failed invocations
+  - Maximum retry attempts: 2
+  - Maximum event age: 60 seconds
+  - Failed invocations are sent to an SQS DLQ with 14-day retention
 
 #### 2. `glue-crawler-succeeded` (EventBridge Trigger Lambda)
 
@@ -54,6 +67,7 @@ S3 (Raw Data) → Lambda → Glue Crawler → EventBridge → Lambda → Glue ET
 - **Permissions**: `glue:StartJobRun` and `glue:GetJobRun` on the ETL job resource
 - **Environment Variables**:
   - `JOB_NAME`: Name of the Glue ETL job to start
+- **Error Handling**: Disabled by default (can be enabled via module parameter)
 
 ### AWS Glue
 
@@ -189,6 +203,7 @@ sns_topic_email_endpoint   = "your-email@example.com"
 ### Monitoring
 
 - **Lambda Logs**: Available in CloudWatch Logs at `/aws/lambda/<function-name>`
+- **Lambda DLQ**: When error handling is enabled, check the SQS Dead Letter Queue (`<function-name>-dlq`) for failed invocations
 - **Glue Jobs**: Monitor in AWS Glue console under Jobs → `etl-datalake` → Runs
 - **EventBridge**: View event history in EventBridge console
 
@@ -208,9 +223,19 @@ The Glue ETL job (`etljob.py`) performs the following transformations:
 ## Module Structure
 
 - `modules/s3/`: S3 bucket creation with optional Lambda triggers and object uploads
-- `modules/lambda/`: Lambda function deployment with IAM roles and CloudWatch logging
+- `modules/lambda/`: Lambda function deployment with IAM roles, CloudWatch logging, and optional error handling (DLQ, retry configuration)
 - `modules/glue/`: Glue database, crawler, and ETL job configuration
 - `modules/athena/`: Athena workgroup and Glue catalog table configuration for querying processed data
+
+### Lambda Module Features
+
+The Lambda module supports the following optional features:
+
+- **Error Handling** (`error_handling` parameter, default: `false`): When enabled, creates:
+  - SQS Dead Letter Queue for failed invocations
+  - IAM policy for Lambda to send messages to DLQ
+  - Event invoke configuration with retry settings (2 retries, 60-second max age)
+  - Dead letter config on the Lambda function
 
 ## Outputs
 
@@ -254,8 +279,3 @@ terraform destroy
 ```
 
 **Note**: Ensure all data and objects in S3 buckets are removed or the buckets are emptied before running `terraform destroy`, as Terraform cannot delete non-empty S3 buckets.
-
-## Notes
-
-- The diagram referenced in `assets/diagram.png` shows a conceptual architecture that includes an SQS retry queue, which is not currently implemented in this codebase. This could be added as a future enhancement for handling Lambda failures with retry logic.
-- The processed data bucket is currently configured to use the same bucket as the raw data, with a different prefix (`processed/`). A separate processed bucket module is commented out in `main.tf` if you prefer separate buckets.
